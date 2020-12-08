@@ -33,7 +33,7 @@ app.get("/urls", (req, res) => {
 app.post("/urls", (req, res) => {
   const randomString = generateRandomStrings(6);
   urlDatabase[randomString] = req.body.longURL;
-  res.redirect(`/u/${randomString}`);
+  res.redirect("/urls");
 });
 
 //Creating new short URLs
@@ -58,8 +58,14 @@ app.get("/u/:shortURL", (req, res) => {
 
 //Deleting a URL
 app.post("/urls/:shortURL/delete", (req, res) => {
-  // console.log(req.params.shortURL);
   delete urlDatabase[req.params.shortURL];
+  res.redirect("/urls");
+});
+
+//Updating a URL
+app.post("/urls/:shortURL", (req, res) => {
+  const shortURL = req.params.shortURL;
+  urlDatabase[shortURL] = req.body.updatedURL;
   res.redirect("/urls");
 });
 
