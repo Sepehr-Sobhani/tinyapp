@@ -3,6 +3,18 @@ const app = express();
 const PORT = 8080;
 const bodyParser = require("body-parser");
 
+const generateRandomStrings = (stringLength) => {
+  let randomString = "";
+  let characters =
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  for (let i = 0; i < stringLength; i++) {
+    randomString += characters.charAt(
+      Math.floor(Math.random() * characters.length)
+    );
+  }
+  return randomString;
+};
+
 const urlDatabase = {
   b2xVn2: "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",
