@@ -29,8 +29,9 @@ app.get("/urls", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body);
-  res.send("OK");
+  const randomString = generateRandomStrings(6);
+  urlDatabase[randomString] = req.body.longURL;
+  res.redirect(`/u/${randomString}`);
 });
 
 app.get("/urls/new", (req, res) => {
@@ -43,6 +44,11 @@ app.get("/urls/:shortURL", (req, res) => {
     longURL: urlDatabase[req.params.shortURL],
   };
   res.render("urls_show", templateVars);
+});
+
+app.get("/u/:shortURL", (req, res) => {
+  longURL = urlDatabase[req.params.shortURL];
+  res.redirect(longURL);
 });
 
 app.listen(PORT, () => {
