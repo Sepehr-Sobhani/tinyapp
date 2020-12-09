@@ -32,13 +32,6 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
-//Sending data with form to create a new short URL
-app.post("/urls", (req, res) => {
-  const randomString = generateRandomStrings(6);
-  urlDatabase[randomString] = req.body.longURL;
-  res.redirect("/urls");
-});
-
 //Creating new short URLs
 app.get("/urls/new", (req, res) => {
   const templateVars = { username: req.cookies["username"] };
@@ -74,14 +67,23 @@ app.post("/urls/:shortURL", (req, res) => {
   res.redirect("/urls");
 });
 
+//login with the username
 app.post("/login", (req, res) => {
   const username = req.body.username;
   res.cookie("username", username);
   res.redirect("/urls");
 });
 
+//logout button route
 app.post("/logout", (req, res) => {
   res.clearCookie("username");
+  res.redirect("/urls");
+});
+
+//Sending data with form to create a new short URL
+app.post("/urls", (req, res) => {
+  const randomString = generateRandomStrings(6);
+  urlDatabase[randomString] = req.body.longURL;
   res.redirect("/urls");
 });
 
