@@ -3,6 +3,7 @@ const app = express();
 const PORT = 8080;
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
+const bcrypt = require("bcrypt");
 
 //Short URL generator
 const generateRandomStrings = (stringLength) => {
@@ -147,8 +148,7 @@ app.post("/login", (req, res) => {
   const userEmail = req.body.email;
   const password = req.body.password;
   const foundUser = getUserByEmail(userEmail, users);
-
-  if (foundUser && foundUser["password"] === password) {
+  if (foundUser && bcrypt.compareSync(password, foundUser["hashedPassword"])) {
     res.cookie("userId", foundUser.id);
     res.redirect("/urls");
   } else {
@@ -175,11 +175,11 @@ app.post("/urls", (req, res) => {
 
 app.post("/register", (req, res) => {
   const email = req.body.email;
-  const password = req.body.password;
+  const hashedPassword = bcrypt.hashSync(req.body.password, 10);
   const id = idGenerator();
-  if (email && password) {
+  if (email && hashedPassword) {
     if (!getUserByEmail(email, users)) {
-      users[id] = { id, email, password };
+      users[id] = { id, email, hashedPassword };
       res.cookie("userId", id);
       res.redirect("urls");
     } else {
