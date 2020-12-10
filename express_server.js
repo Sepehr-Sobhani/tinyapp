@@ -33,7 +33,7 @@ const getUserByEmail = (email, obj) => {
 };
 
 //Finding URLs for a specific user ID
-const usersURLs = (id, obj) => {
+const urlsForUser = (id, obj) => {
   const urlsObject = {};
   for (const key in obj) {
     if (obj[key].userID === id) {
@@ -60,7 +60,7 @@ app.use(cookieParser());
 app.get("/urls", (req, res) => {
   const userId = req.cookies["userId"];
   const templateVars = {
-    urls: usersURLs(userId, urlDatabase),
+    urls: urlsForUser(userId, urlDatabase),
     user: users[userId || ""],
   };
   res.render("urls_index", templateVars);
@@ -117,16 +117,29 @@ app.get("/login", (req, res) => {
 // <--------------------POST Request Below--------------------------->
 //Deleting a URL
 app.post("/urls/:shortURL/delete", (req, res) => {
-  delete urlDatabase[req.params.shortURL];
-  res.redirect("/urls");
+  const shortURL = req.params.shortURL;
+
+  if (req.cookies["userId"] === urlDatabase[shortURL].userID) {
+    delete urlDatabase[shortURL];
+    res.redirect("/urls");
+  } else {
+    const errorMessage = "You are not authorized to delete the link.";
+    res.status(401).end(errorMessage);
+  }
 });
 
 //Updating a URL
 app.post("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  urlDatabase[shortURL]["longURL"] = req.body.updatedURL;
-  urlDatabase[shortURL]["userID"] = req.cookies["userId"];
-  res.redirect("/urls");
+  const userId = req.cookies["userId"];
+  if (userId === urlDatabase[shortURL].userID) {
+    urlDatabase[shortURL]["longURL"] = req.body.updatedURL;
+    urlDatabase[shortURL]["userID"] = userId;
+    res.redirect("/urls");
+  } else {
+    const errorMessage = "You are not authorized to edit the link.";
+    res.status(401).end(errorMessage);
+  }
 });
 
 //login with the email
