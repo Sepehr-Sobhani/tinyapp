@@ -114,16 +114,18 @@ app.post("/urls/:shortURL", (req, res) => {
   res.redirect("/urls");
 });
 
-//login with the username
+//login with the email
 app.post("/login", (req, res) => {
   const userEmail = req.body.email;
-  const user = getUserByEmail(userEmail, users);
+  const password = req.body.password;
+  const foundUser = getUserByEmail(userEmail, users);
 
-  if (user) {
+  if ((foundUser, foundUser["password"] === password)) {
+    res.cookie("userId", foundUser.id);
     res.redirect("/urls");
   } else {
     const errorMessage = "Login credentials not valid.";
-    res.status(401).end(errorMessage);
+    res.status(403).end(errorMessage);
   }
 });
 
@@ -155,7 +157,7 @@ app.post("/register", (req, res) => {
     }
   } else {
     const errorMessage =
-      "Empty username or password. Please make sure you fill out both fields.";
+      "Empty email or password. Please make sure you fill out both fields.";
     res.status(400).end(errorMessage);
   }
 });
