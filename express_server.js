@@ -52,21 +52,21 @@ app.use(cookieParser());
 app.get("/urls", (req, res) => {
   const templateVars = {
     urls: urlDatabase,
-    user: users[req.cookies["userId"]],
+    user: users[req.cookies["userId"] || ""],
   };
   res.render("urls_index", templateVars);
 });
 
 //Creating new short URLs
 app.get("/urls/new", (req, res) => {
-  const templateVars = { user: users[req.cookies["userId"]] };
+  const templateVars = { user: users[req.cookies["userId"]] || "" };
   res.render("urls_new", templateVars);
 });
 
 //Getting details of a specific short URL
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
-    user: users[req.cookies["userId"]],
+    user: users[req.cookies["userId"]] || "",
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],
   };
@@ -91,9 +91,15 @@ app.get("/u/:shortURL", (req, res) => {
 
 //Registeration route (GET)
 app.get("/register", (req, res) => {
-  res.render("registeration_page");
+  const templateVars = { user: users[req.cookies["userId"]] || "" };
+  res.render("registeration_page", templateVars);
 });
 
+//Getting Login page
+app.get("/login", (req, res) => {
+  const templateVars = { user: users[req.cookies["userId"]] || "" };
+  res.render("login_page", templateVars);
+});
 // <--------------------POST Request Below--------------------------->
 //Deleting a URL
 app.post("/urls/:shortURL/delete", (req, res) => {
