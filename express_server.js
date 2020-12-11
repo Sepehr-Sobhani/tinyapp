@@ -30,6 +30,13 @@ app.use(
 );
 
 // <--------------------------Get Requests Below------------------------->
+//Root route
+app.get("/", (req, res) => {
+  if (req.session.userId) {
+    res.redirect("/urls");
+  }
+  res.redirect("/login");
+});
 //Index page for all URLs
 app.get("/urls", (req, res) => {
   const userId = req.session.userId;
@@ -37,13 +44,16 @@ app.get("/urls", (req, res) => {
     urls: urlsForUser(userId, urlDatabase),
     user: users[userId || ""],
   };
+  if (!userId) {
+    res.statusCode = 401;
+  }
   res.render("urls_index", templateVars);
 });
 
 //Creating new short URLs
 app.get("/urls/new", (req, res) => {
   const userId = users[req.session.userId];
-  if (userId) {
+  if (req.session.userId) {
     const templateVars = { user: users[req.session.userId] || "" };
     res.render("urls_new", templateVars);
   } else {
@@ -53,14 +63,20 @@ app.get("/urls/new", (req, res) => {
 
 //Getting details of a specific short URL
 app.get("/urls/:shortURL", (req, res) => {
+  const shortURL = req.params.shortURL;
+  const userID = req.session.userId;
+  const userURLs = urlsForUser(userID, urlDatabase);
   const templateVars = {
-    user: users[req.session.userId] || "",
-    shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL].longURL,
+    shortURL,
+    user: users[userID] || "",
+    longURL: urlDatabase[shortURL].longURL,
   };
-  if (!urlDatabase[req.params.shortURL]) {
-    const errorMessage = "This short URL does not exist.";
-    res.status(404).end(errorMessage);
+  if (!urlDatabase[shortURL]) {
+    const errorMessage = "This URL does not exist.";
+    res.status(404).render("error_page", { user: users[userID], errorMessage });
+  } else if (!userID || !userURLs[shortURL]) {
+    const errorMessage = "You are not authorized to see this URL";
+    res.status(401).render("error_page", { user: users[userID], errorMessage });
   } else {
     res.render("urls_show", templateVars);
   }
@@ -73,7 +89,9 @@ app.get("/u/:shortURL", (req, res) => {
     res.redirect(longURL);
   } else {
     const errorMessage = "This short URL does not exist.";
-    res.status(404).end(errorMessage);
+    res
+      .status(404)
+      .render("error_page", { user: users[req.session.userId], errorMessage });
   }
 });
 
@@ -85,6 +103,10 @@ app.get("/register", (req, res) => {
 
 //Getting Login page
 app.get("/login", (req, res) => {
+  if (req.session.userId) {
+    res.redirect("/urls");
+    return;
+  }
   const templateVars = { user: users[req.session.userId] || "" };
   res.render("login_page", templateVars);
 });
@@ -92,27 +114,27 @@ app.get("/login", (req, res) => {
 //Deleting a URL
 app.post("/urls/:shortURL/delete", (req, res) => {
   const shortURL = req.params.shortURL;
-
-  if (req.session.userId === urlDatabase[shortURL].userID) {
+  const userID = req.session.userId;
+  if (userID && userID === urlDatabase[shortURL].userID) {
     delete urlDatabase[shortURL];
     res.redirect("/urls");
   } else {
     const errorMessage = "You are not authorized to delete the link.";
-    res.status(401).end(errorMessage);
+    res.status(401).render("error_page", { user: users[userID], errorMessage });
   }
 });
 
 //Updating a URL
 app.post("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  const userId = req.session.userId;
-  if (userId === urlDatabase[shortURL].userID) {
+  const userID = req.session.userId;
+  if (userID && userID === urlDatabase[shortURL].userID) {
     urlDatabase[shortURL]["longURL"] = req.body.updatedURL;
-    urlDatabase[shortURL]["userID"] = userId;
+    urlDatabase[shortURL]["userID"] = userID;
     res.redirect("/urls");
   } else {
     const errorMessage = "You are not authorized to edit the link.";
-    res.status(401).end(errorMessage);
+    res.status(401).render("error_page", { user: users[userID], errorMessage });
   }
 });
 
@@ -126,7 +148,9 @@ app.post("/login", (req, res) => {
     res.redirect("/urls");
   } else {
     const errorMessage = "Login credentials not valid.";
-    res.status(403).end(errorMessage);
+    res
+      .status(403)
+      .render("error_page", { user: users[req.session.userId], errorMessage });
   }
 });
 
@@ -138,12 +162,19 @@ app.post("/logout", (req, res) => {
 
 //Sending data with form to create a new short URL
 app.post("/urls", (req, res) => {
-  const randomString = generateRandomStrings(6);
-  urlDatabase[randomString] = {
-    longURL: req.body.longURL,
-    userID: req.session.userId,
-  };
-  res.redirect("/urls");
+  if (req.session.userId) {
+    const randomString = generateRandomStrings(6);
+    urlDatabase[randomString] = {
+      longURL: req.body.longURL,
+      userID: req.session.userId,
+    };
+    res.redirect(`/urls/${randomString}`);
+  } else {
+    const errorMessage = "Only authorized users can create short URLs";
+    res
+      .status(401)
+      .render("error_page", { user: users[req.session.userId], errorMessage });
+  }
 });
 
 app.post("/register", (req, res) => {
@@ -157,12 +188,17 @@ app.post("/register", (req, res) => {
       res.redirect("urls");
     } else {
       const errorMessage = "This email address is already registered.";
-      res.status(400).end(errorMessage);
+      res.status(400).render("error_page", {
+        user: users[req.session.userId],
+        errorMessage,
+      });
     }
   } else {
     const errorMessage =
       "Empty email or password. Please make sure you fill out both fields.";
-    res.status(400).end(errorMessage);
+    res
+      .status(400)
+      .render("error_page", { user: users[req.session.userId], errorMessage });
   }
 });
 
