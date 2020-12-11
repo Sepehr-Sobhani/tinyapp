@@ -5,7 +5,7 @@ const PORT = 8080;
 const bodyParser = require("body-parser");
 const cookieSession = require("cookie-session");
 const bcrypt = require("bcrypt");
-
+const methodOverride = require("method-override");
 //Importing Helper functions
 const {
   idGenerator,
@@ -28,6 +28,7 @@ app.use(
     keys: ["key1", "key2"],
   })
 );
+app.use(methodOverride("_method"));
 
 // <--------------------------Get Requests Below------------------------->
 //Root route
@@ -112,7 +113,7 @@ app.get("/login", (req, res) => {
 });
 // <--------------------POST Request Below--------------------------->
 //Deleting a URL
-app.post("/urls/:shortURL/delete", (req, res) => {
+app.delete("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const userID = req.session.userId;
   if (userID && userID === urlDatabase[shortURL].userID) {
@@ -125,7 +126,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 });
 
 //Updating a URL
-app.post("/urls/:shortURL", (req, res) => {
+app.put("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const userID = req.session.userId;
   if (userID && userID === urlDatabase[shortURL].userID) {
