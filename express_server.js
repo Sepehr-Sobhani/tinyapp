@@ -89,7 +89,9 @@ app.get("/urls/:shortURL", (req, res) => {
 
 //Redirecting to the long URL
 app.get("/u/:shortURL", (req, res) => {
-  if (urlDatabase[req.params.shortURL]) {
+  const shortURL = req.params.shortURL;
+  if (urlDatabase[shortURL]) {
+    urlDatabase[shortURL].visited++;
     res.redirect(urlDatabase[req.params.shortURL].longURL);
   } else {
     const errorMessage = "This URL does not exist.";
@@ -175,6 +177,8 @@ app.post("/urls", (req, res) => {
     urlDatabase[randomString] = {
       longURL: req.body.longURL,
       userID: req.session.userId,
+      createdDate: new Date().toLocaleDateString("en-US"),
+      visited: 0,
     };
     res.redirect(`/urls/${randomString}`);
   } else {
