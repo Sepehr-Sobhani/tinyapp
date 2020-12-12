@@ -101,14 +101,14 @@ app.get("/u/:shortURL", (req, res) => {
   }
 });
 
-//Getting registeration form
+//Getting registration form
 app.get("/register", (req, res) => {
   if (req.session.userId) {
     res.redirect("/urls");
     return;
   }
   const templateVars = { user: users[req.session.userId] || "" };
-  res.render("registeration_page", templateVars);
+  res.render("registration_page", templateVars);
 });
 
 //Getting Login page
